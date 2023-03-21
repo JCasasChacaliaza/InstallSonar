@@ -2,8 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sonarqube
-  labels:
-    app: sonarqube
 spec:
   replicas: 1
   selector:
@@ -18,13 +16,14 @@ spec:
         - name: sonarqube
           image: sonarqube:8.9.2-community
           ports:
-            - name: http
-              containerPort: 9000
+            - containerPort: 9000
           volumeMounts:
             - name: sonarqube-data
               mountPath: /opt/sonarqube/data
             - name: sonarqube-extensions
               mountPath: /opt/sonarqube/extensions
+            - name: sonarqube-logs
+              mountPath: /opt/sonarqube/logs
       volumes:
         - name: sonarqube-data
           persistentVolumeClaim:
@@ -32,16 +31,18 @@ spec:
         - name: sonarqube-extensions
           persistentVolumeClaim:
             claimName: sonarqube-extensions
+        - name: sonarqube-logs
+          persistentVolumeClaim:
+            claimName: sonarqube-logs
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: sonarqube
 spec:
+  type: LoadBalancer
+  ports:
+    - port: 9000
+      targetPort: 9000
   selector:
     app: sonarqube
-  ports:
-    - name: http
-      port: 9000
-      targetPort: http
-  type: LoadBalancer
