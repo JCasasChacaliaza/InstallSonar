@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonarqube-postgresql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarqube-postgresql
+spec:
+  selector:
+    matchLabels:
+      app: sonarqube-postgresql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: sonarqube-postgresql
+    spec:
+      containers:
+        - name: sonarqube-postgresql
+          image: postgres:12
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: sonarqube
+            - name: POSTGRES_PASSWORD
+              value: sonarqube
+            - name: POSTGRES_DB
+              value: sonarqube
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: sonarqube-postgresql-data
+      volumes:
+        - name: sonarqube-postgresql-data
+          persistentVolumeClaim:
+            claimName: sonarqube-postgresql-pvc
